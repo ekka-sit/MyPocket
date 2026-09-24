@@ -1,0 +1,21 @@
+{
+  "name": "mypocket",
+  "version": "1.0.0",
+  "description": "MyPocket -> Income and Expense Statement",
+  "homepage": "https://github.com/ekka-sit/MyPocket#readme",
+  "bugs": {
+    "url": "https://github.com/ekka-sit/MyPocket/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ekka-sit/MyPocket.git"
+  },
+  "license": "ISC",
+  "author": "ekka-sit",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  }
+}
