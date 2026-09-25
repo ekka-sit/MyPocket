@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Pocket - Personal Expense Tracker</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-overlay" id="overlay"></div>
+
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link active" data-page="home">Home</a>
+      <a href="#" class="sidebar-link" data-page="calendar">Calender</a>
+      <a href="#" class="sidebar-link" data-page="statistic">Statistic</a>
+    </nav>
+  </aside>
+
+  <div class="app-shell" id="appShell">
+
+    <header class="app-header">
+      <button type="button" class="menu-toggle" id="menuToggle" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="sidebar">
+        <span class="menu-icon menu-icon--bars" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        <span class="menu-icon menu-icon--arrow" aria-hidden="true">&#9654;</span>
+      </button>
+
+      <div class="header-year-wrap">
+        <button type="button" class="header-year" id="yearTrigger" aria-haspopup="listbox" aria-expanded="false">2026</button>
+        <ul class="picker-list" id="yearList" role="listbox" tabindex="-1" hidden></ul>
+      </div>
+
+      <div class="header-brand">
+        <span class="header-brand-text">My Pocket</span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-container">
+
+        <div class="month-summary-row">
+          <div class="month-picker-wrap">
+            <button type="button" class="month-label" id="monthTrigger" aria-haspopup="listbox" aria-expanded="false">Sep</button>
+            <ul class="picker-list" id="monthList" role="listbox" tabindex="-1" hidden></ul>
+          </div>
+
+          <button type="button" class="pocket-badge" id="pocketBadge" aria-pressed="false" aria-label="สลับโหมดรายรับ/รายจ่าย">
+            <span class="pocket-badge-inner" id="pocketBadgeInner">
+              <span class="pocket-badge-face pocket-badge-face--expense">
+                <img src="images/pocket.png" alt="" class="pocket-badge-icon">
+                <span class="pocket-badge-amount" id="expenseAmount">0</span>
+              </span>
+              <span class="pocket-badge-face pocket-badge-face--income">
+                <img src="images/pocket_in.png" alt="" class="pocket-badge-icon">
+                <span class="pocket-badge-amount" id="incomeAmount">0</span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="day-list" id="dayList"></div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <button type="button" class="fab" id="fabAdd" aria-label="เพิ่มรายการ">
+    <span aria-hidden="true">+</span>
+  </button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

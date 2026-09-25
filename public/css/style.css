@@ -1,0 +1,657 @@
+:root {
+  --green-dark: #146b2e;
+  --green-header: #1a7a35;
+  --green-medium: #6fbf4f;
+  --green-nav: #7fc95a;
+  --green-pastel: #dcefdb;
+  --green-pastel-soft: #e6f4e4;
+  --maroon: #8a3b3b;
+  --maroon-dark: #7a3232;
+  --gold: #e8b923;
+  --gold-dark: #c99a12;
+  --tree-line: #9db99c;
+  --text-dark: #1f2b20;
+  --white: #ffffff;
+  --sidebar-green: #2f8f43;
+  --header-height: 72px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--green-nav);
+  font-family: "Poppins", "Trebuchet MS", "Segoe UI", sans-serif;
+  color: var(--text-dark);
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- App shell ---------- */
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  background: var(--green-nav);
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+/* ---------- Header ---------- */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  padding: 0 20px;
+  background: var(--green-header);
+  z-index: 50;
+}
+
+.menu-toggle {
+  border: none;
+  background: transparent;
+  color: var(--white);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.menu-toggle:hover,
+.menu-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.menu-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.18s ease, transform 0.25s ease;
+}
+
+.menu-icon--bars {
+  flex-direction: column;
+  gap: 5px;
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.menu-icon--bars span {
+  display: block;
+  width: 24px;
+  height: 3px;
+  background: var(--white);
+  border-radius: 2px;
+}
+
+.menu-icon--arrow {
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.6) rotate(0deg);
+}
+
+.menu-toggle:hover .menu-icon--bars {
+  opacity: 0;
+  transform: scale(0.6) rotate(0deg);
+}
+
+.menu-toggle:hover .menu-icon--arrow {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.menu-toggle[aria-expanded="true"] .menu-icon--bars {
+  opacity: 0;
+  transform: scale(0.6) rotate(0deg);
+}
+
+.menu-toggle[aria-expanded="true"] .menu-icon--arrow {
+  opacity: 1;
+  transform: scale(1) rotate(90deg);
+}
+
+.header-year-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.header-year {
+  border: none;
+  background: transparent;
+  color: var(--white);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.header-year:hover,
+.header-year[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.header-brand-text {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--white);
+  font-family: "Baloo 2", "Trebuchet MS", sans-serif;
+}
+
+/* ---------- Picker dropdowns (year / month) ---------- */
+
+.picker-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  list-style: none;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+  padding: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  min-width: 120px;
+  z-index: 60;
+}
+
+.month-picker-wrap .picker-list {
+  left: 0;
+  transform: none;
+}
+
+.picker-list[hidden] {
+  display: none;
+}
+
+.picker-option {
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.picker-option:hover {
+  background: var(--green-pastel);
+}
+
+.picker-option.active {
+  background: var(--green-header);
+  color: var(--white);
+}
+
+/* ---------- Page container / month summary row ---------- */
+
+.content {
+  padding: 22px 20px 100px;
+  min-height: calc(100vh - var(--header-height) - 60px);
+}
+
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.month-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 16px;
+}
+
+.month-picker-wrap {
+  position: relative;
+}
+
+.month-label {
+  border: none;
+  background: transparent;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--text-dark);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.month-label:hover,
+.month-label[aria-expanded="true"] {
+  background: rgba(20, 107, 46, 0.12);
+}
+
+/* ---------- Monthly pocket badge — 3D flip ---------- */
+
+.pocket-badge {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  perspective: 1000px;
+  flex-shrink: 0;
+}
+
+.pocket-badge-inner {
+  position: relative;
+  display: block;
+  width: 168px;
+  height: 46px;
+  transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.pocket-badge[aria-pressed="true"] .pocket-badge-inner {
+  transform: rotateY(180deg);
+}
+
+.pocket-badge-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px 0 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.pocket-badge-face--expense {
+  background: var(--maroon);
+}
+
+.pocket-badge-face--income {
+  background: var(--green-header);
+  transform: rotateY(180deg);
+}
+
+.pocket-badge-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.pocket-badge-amount {
+  color: var(--white);
+  font-weight: 800;
+  font-size: 19px;
+  margin-left: auto;
+}
+
+/* ---------- Day list ---------- */
+
+.day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.day-card {
+  background: var(--green-pastel);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(20, 107, 46, 0.12);
+}
+
+.day-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 18px 20px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.day-arrow {
+  font-size: 14px;
+  color: var(--text-dark);
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.day-date {
+  font-size: 19px;
+  font-weight: 800;
+  flex-grow: 1;
+}
+
+.day-total {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.day-total-coin {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 800;
+  font-size: 16px;
+  z-index: 2;
+  margin-right: -14px;
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.15);
+}
+
+.day-total-amount {
+  color: var(--white);
+  font-weight: 800;
+  font-size: 18px;
+  padding: 8px 20px 8px 26px;
+  border-radius: 999px;
+}
+
+.day-total-amount--expense {
+  background: var(--maroon);
+}
+
+.day-total-amount--income {
+  background: var(--green-header);
+}
+
+.day-card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: 0 16px;
+}
+
+.day-card.open .day-card-body {
+  padding: 0 16px 18px;
+}
+
+.tx-group {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 14px 18px 16px;
+  margin-top: 12px;
+}
+
+.tx-group:first-child {
+  margin-top: 0;
+}
+
+.tx-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* ---------- Curved tree view (เวอร์ชันแก้ไขสมบูรณ์) ---------- */
+
+/* กำหนดสีและความหนาของเส้นให้เข้มและชัดเจนยิ่งขึ้น */
+:root {
+  --tree-line: #5c8a5b; /* ปรับสีเส้นเข้มขึ้นเพื่อเพิ่ม Contrast */
+  --tree-width: 2px;    /* ปรับความหนาเส้นจาก 1px เป็น 2px มองเห็นชัดเจน */
+}
+
+/* เว้นระยะกล่องรายการย่อยให้ห่างจากหัวข้อหลักเล็กน้อย เพื่อไม่ให้เส้นไปชนตัวอักษร */
+.tx-subitems {
+  list-style: none;
+  margin: 10px 0 0 0;
+  padding: 0 20px 0 28px;
+  position: relative;
+}
+
+.tx-subitems li {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 15px;
+  color: #3a4a3b;
+}
+
+/* ===================================================
+   1 & 2. ฝั่งซ้าย (ชื่อรายการย่อย)
+   =================================================== */
+
+.tx-subitems li::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  width: 12px;
+  border-left: var(--tree-width) solid var(--tree-line);
+  border-bottom: var(--tree-width) solid var(--tree-line);
+  border-bottom-left-radius: 8px;
+}
+
+/* รายการย่อยอันแรก: เริ่มลากเส้นจากขอบบนกล่อง ไม่พุ่งขึ้นไปชนหมวดหมู่หลักด้านบน */
+.tx-subitems li:first-child::before {
+  top: 0;
+  height: 50%;
+}
+
+/* รายการย่อยอันถัดๆ ไป: ลากเส้นต่อยอดมาจากครึ่งบนของรายการก่อนหน้า */
+.tx-subitems li:not(:first-child)::before {
+  top: -50%;
+  height: 100%;
+}
+
+
+/* ===================================================
+   3. ฝั่งขวา (ยอดเงินย่อย - สะท้อนกับฝั่งซ้ายแบบ Mirror)
+   =================================================== */
+
+.tx-subitem-amount {
+  position: relative;
+  padding-right: 18px; /* เว้นระยะขวามือให้แนวเส้นตรงกับขอบขวาของยอดรวมหลัก */
+}
+
+.tx-subitem-amount::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 12px;
+  /* มีเฉพาะเส้นแนวตั้งฝั่งขวา และเส้นแนวนอนด้านล่างที่ยื่นเลี้ยวซ้ายเข้าหาตัวเลข */
+  border-right: var(--tree-width) solid var(--tree-line);
+  border-bottom: var(--tree-width) solid var(--tree-line);
+  border-bottom-right-radius: 8px; /* ดัดมุมโค้งมนเฉพาะมุมขวาล่าง */
+}
+
+/* รายการย่อยอันแรก (หรือมีรายการย่อยเดียว):
+   ลากเส้นแนวตั้งตรงลงมาจากใต้ฐานยอดรวมหลัก (100) แล้วดัดโค้งเลี้ยวซ้ายเข้าหายอดเงินย่อย */
+.tx-subitems li:first-child .tx-subitem-amount::after {
+  top: -20px;   /* ยืดเส้นแนวตั้งขึ้นไปรับกับใต้ฐานตัวเลขยอดรวมหลักด้านบน */
+  bottom: 50%;  /* วิ่งลงมาจบที่กึ่งกลางตัวเลขย่อยแถวแรก */
+}
+
+/* รายการย่อยอันถัดๆ ไป (ถ้ามี):
+   ลากเส้นแนวตั้งต่อลงมาจากแถวบน แล้วดัดโค้งเลี้ยวซ้ายเข้าหายอดเงินย่อยแถวนั้น */
+.tx-subitems li:not(:first-child) .tx-subitem-amount::after {
+  top: -50%;    /* ดึงเส้นแนวตั้งจากแถวบนลงมาเชื่อมต่อกัน */
+  bottom: 50%;  /* วิ่งลงมาจบที่กึ่งกลางตัวเลขย่อยแถวนั้น */
+} 
+
+/* ---------- Empty state ---------- */
+
+.empty-state {
+  color: var(--white);
+  text-align: center;
+  opacity: 0.9;
+  font-size: 16px;
+  padding: 30px 0;
+}
+
+/* ---------- Floating action button ---------- */
+
+.fab {
+  position: fixed;
+  right: 26px;
+  bottom: 28px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--green-dark);
+  color: var(--white);
+  border: none;
+  font-size: 30px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  z-index: 25;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.fab:hover {
+  background: #0e5624;
+  transform: scale(1.05);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background: var(--sidebar-green);
+  z-index: 40;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  padding-top: 6px;
+}
+
+body.menu-open .sidebar {
+  transform: translateX(0);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 18px 24px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--white);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link.active {
+  background: var(--white);
+  color: var(--text-dark);
+}
+
+.sidebar-link:not(.active):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Overlay ---------- */
+
+.app-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 30, 15, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 30;
+}
+
+body.menu-open .app-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 480px) {
+  .header-year {
+    font-size: 22px;
+  }
+
+  .header-brand-text {
+    font-size: 17px;
+  }
+
+  .month-label {
+    font-size: 22px;
+  }
+
+  .pocket-badge-inner {
+    width: 140px;
+    height: 40px;
+  }
+
+  .pocket-badge-amount {
+    font-size: 16px;
+  }
+
+  .day-date {
+    font-size: 16px;
+  }
+
+  .day-total-amount {
+    font-size: 15px;
+    padding: 6px 16px 6px 22px;
+  }
+
+  .sidebar {
+    width: 78vw;
+  }
+}
