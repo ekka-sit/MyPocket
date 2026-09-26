@@ -2,72 +2,28 @@
   "use strict";
 
   /* ---------------------------------------------------------
-   * Mock data (Phase 1 frontend demo — will be replaced by
-   * data fetched from the /api/transactions/summary endpoint
-   * once the backend is wired up). Each leaf item carries a
-   * "type" of "expense" or "income" used for mode filtering.
+   * Data & Global State
    * ------------------------------------------------------- */
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var MIN_YEAR = 2020;
   var CURRENT_YEAR = new Date().getFullYear();
   var MAX_YEAR = Math.max(CURRENT_YEAR, 2026);
 
-  var DATA = {
-    "2026-8": [
-      {
-        date: "29 Sep 2026",
-        groups: [
-          {
-            name: "อาหารและเครื่องดื่ม",
-            items: [
-              { name: "อาหารเย็น", amount: 50, type: "expense" },
-              { name: "อาหารเที่ยง", amount: 50, type: "expense" }
-            ]
-          },
-          {
-            name: "ยานยนต์",
-            items: [
-              { name: "ค่าน้ำมัน", amount: 100, type: "expense" }
-            ]
-          }
-        ]
-      },
-      {
-        date: "28 Sep 2026",
-        groups: [
-          {
-            name: "อาหารและเครื่องดื่ม",
-            items: [
-              { name: "อาหารเย็น", amount: 50, type: "expense" },
-              { name: "อาหารเที่ยง", amount: 50, type: "expense" }
-            ]
-          }
-        ]
-      },
-      {
-        date: "1 Sep 2026",
-        groups: [
-          {
-            name: "รายได้",
-            items: [
-              { name: "เงินเดือน", amount: 15000, type: "income" }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
   var state = {
     year: 2026,
-    monthIndex: 8,
+    monthIndex: 8, // 0 = Jan, 8 = Sep
     mode: "expense",
-    yearListBuilt: false,
-    monthListBuilt: false
+    currentDaysData: [] // เก็บข้อมูลรายการของเดือนปัจจุบันที่ดึงมาจาก DB
   };
 
+  // Modal Form State
+  var modalType = 'expense';
+  var expression = '';
+  var selectedDate = new Date();
+  var selectedImageFile = null;
+
   /* ---------------------------------------------------------
-   * Element references
+   * Element References
    * ------------------------------------------------------- */
   var menuToggle = document.getElementById("menuToggle");
   var overlay = document.getElementById("overlay");
@@ -84,9 +40,31 @@
 
   var dayList = document.getElementById("dayList");
   var fabAdd = document.getElementById("fabAdd");
+  var fabIcon = document.getElementById("fabIcon");
+
+  // Modal Elements
+  var modalOverlay = document.getElementById("modalOverlay");
+  var transactionModal = document.getElementById("transactionModal");
+  var typeToggleBtn = document.getElementById("typeToggleBtn");
+  var dateDisplay = document.getElementById("dateDisplay");
+  var dateText = document.getElementById("dateText");
+  var hiddenDatePicker = document.getElementById("hiddenDatePicker");
+  var amountDisplay = document.getElementById("amountDisplay");
+  var categorySelect = document.getElementById("categorySelect");
+  var noteInput = document.getElementById("noteInput");
+  var cameraBtn = document.getElementById("cameraBtn");
+  var receiptInput = document.getElementById("receiptInput");
+  var imagePreviewContainer = document.getElementById("imagePreviewContainer");
+  var imagePreview = document.getElementById("imagePreview");
+  var removeImageBtn = document.getElementById("removeImageBtn");
+
+  var miniModalOverlay = document.getElementById("miniModalOverlay");
+  var newCategoryInput = document.getElementById("newCategoryInput");
+  var cancelCategoryBtn = document.getElementById("cancelCategoryBtn");
+  var saveCategoryBtn = document.getElementById("saveCategoryBtn");
 
   /* ---------------------------------------------------------
-   * Sidebar menu open / close
+   * Sidebar Menu Controls
    * ------------------------------------------------------- */
   function openMenu() {
     document.body.classList.add("menu-open");
@@ -123,7 +101,7 @@
   });
 
   /* ---------------------------------------------------------
-   * Generic popover helper (year / month pickers)
+   * Popover Helper (Year / Month Pickers)
    * ------------------------------------------------------- */
   function closePicker(trigger, list) {
     list.hidden = true;
@@ -159,6 +137,7 @@
       closeMenu();
       closePicker(yearTrigger, yearList);
       closePicker(monthTrigger, monthList);
+      closeModal();
     }
   });
 
@@ -177,7 +156,7 @@
           yearTrigger.textContent = year;
           closePicker(yearTrigger, yearList);
           buildYearList();
-          render();
+          loadDataAndRender();
         });
         li.appendChild(btn);
         yearList.appendChild(li);
@@ -199,7 +178,7 @@
         monthTrigger.textContent = label;
         closePicker(monthTrigger, monthList);
         buildMonthList();
-        render();
+        loadDataAndRender();
       });
       li.appendChild(btn);
       monthList.appendChild(li);
@@ -219,7 +198,7 @@
   });
 
   /* ---------------------------------------------------------
-   * Pocket badge — 3D flip + mode switching
+   * Pocket Badge — 3D Flip & Mode Switch
    * ------------------------------------------------------- */
   pocketBadge.addEventListener("click", function () {
     state.mode = state.mode === "expense" ? "income" : "expense";
@@ -228,15 +207,75 @@
   });
 
   /* ---------------------------------------------------------
-   * Rendering helpers
+   * Database Integration & Data Transformation
+   * ------------------------------------------------------- */
+  function parseDbDate(dateVal) {
+    if (!dateVal) return new Date();
+    if (typeof dateVal === 'object' && dateVal.$date) return new Date(dateVal.$date);
+    return new Date(dateVal);
+  }
+
+  // แปลงข้อมูลดิบจาก MongoDB เป็นโครงสร้าง Group สำหรับวาดการ์ด
+  function groupTransactions(rawList) {
+    var dayMap = {};
+
+    rawList.forEach(function (tx) {
+      var d = parseDbDate(tx.date);
+      var dateStr = d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+
+      if (!dayMap[dateStr]) {
+        dayMap[dateStr] = { date: dateStr, groupsMap: {} };
+      }
+
+      var catName = tx.category || "อื่นๆ";
+      if (!dayMap[dateStr].groupsMap[catName]) {
+        dayMap[dateStr].groupsMap[catName] = { name: catName, items: [] };
+      }
+
+      dayMap[dateStr].groupsMap[catName].items.push({
+        name: (tx.note && tx.note.trim() !== "") ? tx.note : catName,
+        amount: Number(tx.amount) || 0,
+        type: tx.type || "expense"
+      });
+    });
+
+    return Object.keys(dayMap).map(function (dateStr) {
+      var dayObj = dayMap[dateStr];
+      var groups = Object.keys(dayObj.groupsMap).map(function (catName) {
+        return dayObj.groupsMap[catName];
+      });
+      return {
+        date: dayObj.date,
+        groups: groups
+      };
+    });
+  }
+
+  function loadDataAndRender() {
+    var monthQuery = state.monthIndex + 1; // 1 - 12
+    var url = '/api/transactions?year=' + state.year + '&month=' + monthQuery;
+
+    fetch(url)
+      .then(function (res) {
+        if (!res.ok) throw new Error("Fetch error");
+        return res.json();
+      })
+      .then(function (rawTransactions) {
+        state.currentDaysData = groupTransactions(rawTransactions);
+        render();
+      })
+      .catch(function (err) {
+        console.warn("ไม่สามารถดึงข้อมูลจาก Server ได้:", err);
+        state.currentDaysData = [];
+        render();
+      });
+  }
+
+  /* ---------------------------------------------------------
+   * Rendering Helpers (Accordion & Curved Tree View)
    * ------------------------------------------------------- */
   function formatAmount(value) {
     return Number(value).toLocaleString("en-US");
-  }
-
-  function getMonthData() {
-    var key = state.year + "-" + state.monthIndex;
-    return DATA[key] || [];
   }
 
   function filterDaysByMode(days, mode) {
@@ -275,7 +314,9 @@
     days.forEach(function (day) {
       day.groups.forEach(function (group) {
         group.items.forEach(function (item) {
-          totals[item.type] += item.amount;
+          if (totals[item.type] !== undefined) {
+            totals[item.type] += item.amount;
+          }
         });
       });
     });
@@ -284,7 +325,7 @@
   }
 
   function updateBadgeAmounts() {
-    var totals = computeMonthTotals(getMonthData());
+    var totals = computeMonthTotals(state.currentDaysData);
     expenseAmountEl.textContent = formatAmount(totals.expense);
     incomeAmountEl.textContent = formatAmount(totals.income);
   }
@@ -413,7 +454,7 @@
   function renderDayList() {
     dayList.innerHTML = "";
 
-    var days = filterDaysByMode(getMonthData(), state.mode);
+    var days = filterDaysByMode(state.currentDaysData, state.mode);
 
     if (days.length === 0) {
       var empty = document.createElement("p");
@@ -436,14 +477,293 @@
   }
 
   /* ---------------------------------------------------------
-   * Floating action button (placeholder for Phase 1)
+   * Modal Form, Calculator, Categories & Image Upload Logic
    * ------------------------------------------------------- */
   fabAdd.addEventListener("click", function () {
-    window.alert("ฟอร์มเพิ่มรายการจะเปิดใช้งานในขั้นตอนถัดไป");
+    if (modalOverlay.classList.contains("hidden")) {
+      openModal();
+    } else {
+      submitTransaction();
+    }
   });
+
+  modalOverlay.addEventListener("click", function (e) {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  function openModal() {
+    modalOverlay.classList.remove("hidden");
+    fabAdd.classList.add("active");
+    fabIcon.textContent = "✓";
+    modalType = state.mode;
+    updateModalThemeUI();
+    fetchCategories(modalType);
+    updateDateDisplay(selectedDate);
+  }
+
+  function closeModal() {
+    modalOverlay.classList.add("hidden");
+    fabAdd.classList.remove("active", "active-income");
+    fabIcon.textContent = "+";
+    resetForm();
+  }
+
+  function updateModalThemeUI() {
+    if (modalType === 'expense') {
+      transactionModal.className = 'modal-card modal-expense';
+      typeToggleBtn.textContent = 'รายจ่าย';
+      fabAdd.classList.remove('active-income');
+    } else {
+      transactionModal.className = 'modal-card modal-income';
+      typeToggleBtn.textContent = 'รายรับ';
+      fabAdd.classList.add('active-income');
+    }
+  }
+
+  typeToggleBtn.addEventListener("click", function () {
+    modalType = modalType === 'expense' ? 'income' : 'expense';
+    updateModalThemeUI();
+    fetchCategories(modalType);
+  });
+
+  // Date Picker
+  dateDisplay.addEventListener("click", function () {
+    if (typeof hiddenDatePicker.showPicker === 'function') {
+      hiddenDatePicker.showPicker();
+    } else {
+      hiddenDatePicker.click();
+    }
+  });
+
+  hiddenDatePicker.addEventListener("change", function (e) {
+    if (e.target.value) {
+      selectedDate = new Date(e.target.value);
+      updateDateDisplay(selectedDate);
+    }
+  });
+
+  function updateDateDisplay(dateObj) {
+    var day = String(dateObj.getDate()).padStart(2, '0');
+    var month = MONTHS[dateObj.getMonth()];
+    var year = dateObj.getFullYear();
+    dateText.textContent = day + " / " + month + " / " + year;
+    hiddenDatePicker.value = dateObj.toISOString().split('T')[0];
+  }
+
+  // Numpad Controls & Expression Calculator
+  document.querySelectorAll('.numpad-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      handleNumpadInput(btn.getAttribute('data-val'));
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (modalOverlay.classList.contains('hidden')) return;
+
+    if ((e.key >= '0' && e.key <= '9') || ['.', '+', '-', '*', '/'].includes(e.key)) {
+      handleNumpadInput(e.key);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (expression && /[+\-*/]/.test(expression)) {
+        calculateResult();
+      } else {
+        submitTransaction();
+      }
+    } else if (e.key === 'Backspace') {
+      expression = expression.slice(0, -1);
+      amountDisplay.textContent = expression || '0';
+    }
+  });
+
+  function handleNumpadInput(val) {
+    if (val === '=') {
+      calculateResult();
+    } else {
+      if (expression === '' && ['+', '*', '/'].includes(val)) return;
+      expression += val;
+      amountDisplay.textContent = expression || '0';
+    }
+  }
+
+  function calculateResult() {
+    var result = safeEvaluate(expression);
+    expression = String(result);
+    amountDisplay.textContent = expression;
+  }
+
+  function safeEvaluate(expr) {
+    if (!expr) return 0;
+    var sanitized = expr.replace(/[^0-9+\-*/.]/g, '');
+    if (!sanitized) return 0;
+
+    try {
+      var tokens = sanitized.match(/(\d+\.?\d*|[\+\-\*/])/g);
+      if (!tokens) return 0;
+
+      var pass1 = [];
+      for (var i = 0; i < tokens.length; i++) {
+        var token = tokens[i];
+        if (token === '*' || token === '/') {
+          var prev = parseFloat(pass1.pop());
+          var next = parseFloat(tokens[++i]);
+          if (isNaN(next)) break;
+          var res = token === '*' ? prev * next : (next !== 0 ? prev / next : 0);
+          pass1.push(res.toString());
+        } else {
+          pass1.push(token);
+        }
+      }
+
+      var total = parseFloat(pass1[0]) || 0;
+      for (var j = 1; j < pass1.length; j += 2) {
+        var op = pass1[j];
+        var nxt = parseFloat(pass1[j + 1]);
+        if (isNaN(nxt)) break;
+        if (op === '+') total += nxt;
+        if (op === '-') total -= nxt;
+      }
+
+      return isFinite(total) ? Math.round(total * 100) / 100 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Categories API & Mini Modal
+  function fetchCategories(type) {
+    fetch('/api/categories?type=' + type)
+      .then(function (res) { return res.json(); })
+      .then(function (categories) {
+        populateCategories(categories);
+      })
+      .catch(function () {
+        var defaults = type === 'expense'
+          ? [{ name: 'อาหารและเครื่องดื่ม' }, { name: 'ยานยนต์' }, { name: 'ของใช้ในบ้าน' }]
+          : [{ name: 'รายได้' }, { name: 'โบนัส' }];
+        populateCategories(defaults);
+      });
+  }
+
+  function populateCategories(categories) {
+    categorySelect.innerHTML = '<option value="" disabled selected>เลือกหมวดหมู่</option>';
+    categories.forEach(function (cat) {
+      var opt = document.createElement('option');
+      opt.value = cat.name;
+      opt.textContent = cat.name;
+      categorySelect.appendChild(opt);
+    });
+
+    var addOpt = document.createElement('option');
+    addOpt.value = '__ADD_NEW__';
+    addOpt.textContent = '+ เพิ่มหมวดหมู่ใหม่...';
+    categorySelect.appendChild(addOpt);
+  }
+
+  categorySelect.addEventListener('change', function (e) {
+    if (e.target.value === '__ADD_NEW__') openMiniModal();
+  });
+
+  function openMiniModal() {
+    miniModalOverlay.classList.remove('hidden');
+    newCategoryInput.value = '';
+    newCategoryInput.focus();
+  }
+
+  function closeMiniModal() {
+    miniModalOverlay.classList.add('hidden');
+    categorySelect.value = '';
+  }
+
+  cancelCategoryBtn.addEventListener('click', closeMiniModal);
+  saveCategoryBtn.addEventListener('click', function () {
+    var name = newCategoryInput.value.trim();
+    if (!name) return alert('กรุณากรอกชื่อหมวดหมู่');
+
+    fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, type: modalType })
+    }).finally(function () {
+      fetchCategories(modalType);
+      closeMiniModal();
+    });
+  });
+
+  // Image Receipt Upload
+  cameraBtn.addEventListener('click', function () { receiptInput.click(); });
+  receiptInput.addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (file) {
+      selectedImageFile = file;
+      imagePreview.src = URL.createObjectURL(file);
+      imagePreviewContainer.classList.remove('hidden');
+    }
+  });
+
+  removeImageBtn.addEventListener('click', function () {
+    selectedImageFile = null;
+    receiptInput.value = '';
+    imagePreview.src = '';
+    imagePreviewContainer.classList.add('hidden');
+  });
+
+  function resetForm() {
+    expression = '';
+    amountDisplay.textContent = '0';
+    noteInput.value = '';
+    categorySelect.value = '';
+    selectedImageFile = null;
+    receiptInput.value = '';
+    imagePreview.src = '';
+    imagePreviewContainer.classList.add('hidden');
+    selectedDate = new Date();
+  }
+
+  // Submit Transaction to Database API
+  function submitTransaction() {
+    var finalAmount = safeEvaluate(expression);
+    var category = categorySelect.value;
+    var note = noteInput.value.trim();
+
+    if (!category || category === '__ADD_NEW__') {
+      return alert('กรุณาเลือกหมวดหมู่');
+    }
+    if (finalAmount <= 0) {
+      return alert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
+    }
+
+    var formData = new FormData();
+    formData.append('type', modalType);
+    formData.append('date', selectedDate.toISOString());
+    formData.append('amount', finalAmount);
+    formData.append('category', category);
+    formData.append('note', note);
+    if (selectedImageFile) {
+      formData.append('image', selectedImageFile);
+    }
+
+    fetch('/api/transactions', {
+      method: 'POST',
+      body: formData
+    })
+    .then(function (res) {
+      if (res.ok) {
+        closeModal();
+        loadDataAndRender(); // โหลดข้อมูลใหม่จาก DB ทันทีหลังบันทึกสำเร็จ
+      } else {
+        alert('บันทึกไม่สำเร็จ');
+      }
+    })
+    .catch(function (err) {
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับ Server');
+      console.error(err);
+    });
+  }
 
   /* ---------------------------------------------------------
    * Init
    * ------------------------------------------------------- */
-  render();
+  monthTrigger.textContent = MONTHS[state.monthIndex];
+  yearTrigger.textContent = state.year;
+  loadDataAndRender();
 })();

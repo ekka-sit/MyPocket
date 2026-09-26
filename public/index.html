@@ -71,9 +71,92 @@
 
   </div>
 
+  <!-- Floating Action Button -->
   <button type="button" class="fab" id="fabAdd" aria-label="เพิ่มรายการ">
-    <span aria-hidden="true">+</span>
+    <span id="fabIcon" aria-hidden="true">+</span>
   </button>
+
+  <!-- Modal ฟอร์มบันทึกรายการ -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div id="transactionModal" class="modal-card modal-expense">
+      
+      <!-- Modal Header -->
+      <div class="modal-header-custom">
+        <div id="dateDisplay" class="date-picker-trigger">
+          <span id="dateText">25 / Sep / 2026</span>
+          <input type="date" id="hiddenDatePicker" hidden>
+        </div>
+        <button type="button" id="typeToggleBtn" class="type-toggle-btn">รายจ่าย</button>
+      </div>
+
+      <!-- Amount Display Area -->
+      <div class="amount-display-container">
+        <div id="amountDisplay" class="amount-display">0</div>
+      </div>
+
+      <!-- Form Inputs Container -->
+      <div class="form-inputs">
+        <div class="input-group-custom">
+          <label for="categorySelect">หมวดหมู่</label>
+          <select id="categorySelect" class="form-control-custom">
+            <option value="" disabled selected>เลือกหมวดหมู่</option>
+          </select>
+        </div>
+
+        <div class="input-group-custom">
+          <label for="noteInput">หมายเหตุ</label>
+          <input type="text" id="noteInput" class="form-control-custom" placeholder="กรอกหมายเหตุ (เช่น อาหารเย็น)">
+        </div>
+
+        <!-- Camera & Image Upload -->
+        <div class="image-upload-section">
+          <button type="button" id="cameraBtn" class="camera-btn">📷 ถ่ายภาพ / อัปโหลดใบเสร็จ</button>
+          <input type="file" id="receiptInput" accept="image/*" hidden>
+          
+          <div id="imagePreviewContainer" class="image-preview-container hidden">
+            <img id="imagePreview" src="" alt="ใบเสร็จ">
+            <button type="button" id="removeImageBtn" class="remove-img-btn">&times;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Numpad Grid Layout -->
+      <div class="numpad-grid">
+        <button type="button" class="numpad-btn" data-val="7">7</button>
+        <button type="button" class="numpad-btn" data-val="8">8</button>
+        <button type="button" class="numpad-btn" data-val="9">9</button>
+        <button type="button" class="numpad-btn op-btn" data-val="+">+</button>
+
+        <button type="button" class="numpad-btn" data-val="4">4</button>
+        <button type="button" class="numpad-btn" data-val="5">5</button>
+        <button type="button" class="numpad-btn" data-val="6">6</button>
+        <button type="button" class="numpad-btn op-btn" data-val="-">-</button>
+
+        <button type="button" class="numpad-btn" data-val="1">1</button>
+        <button type="button" class="numpad-btn" data-val="2">2</button>
+        <button type="button" class="numpad-btn" data-val="3">3</button>
+        <button type="button" class="numpad-btn op-btn" data-val="*">&times;</button>
+
+        <button type="button" class="numpad-btn" data-val="0">0</button>
+        <button type="button" class="numpad-btn" data-val=".">.</button>
+        <button type="button" class="numpad-btn action-btn" data-val="=">=</button>
+        <button type="button" class="numpad-btn op-btn" data-val="/">&divide;</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Mini Modal (+ เพิ่มหมวดหมู่ใหม่) -->
+  <div id="miniModalOverlay" class="mini-modal-overlay hidden">
+    <div class="mini-modal-card">
+      <h3>เพิ่มหมวดหมู่ใหม่</h3>
+      <input type="text" id="newCategoryInput" class="form-control-custom" placeholder="ชื่อหมวดหมู่...">
+      <div class="mini-modal-actions">
+        <button type="button" id="cancelCategoryBtn" class="btn-secondary-custom">ยกเลิก</button>
+        <button type="button" id="saveCategoryBtn" class="btn-primary-custom">บันทึก</button>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
   <script src="js/app.js"></script>
