@@ -687,11 +687,25 @@
     fetchCategories(modalType);
   });
 
+  /* ---------- แก้ไขการเปิดหน้าต่าง Calendar Date Picker ---------- */
+  dateDisplay.addEventListener("click", function () {
+    if (typeof hiddenDatePicker.showPicker === "function") {
+      try {
+        hiddenDatePicker.showPicker();
+      } catch (err) {
+        hiddenDatePicker.focus();
+      }
+    } else {
+      hiddenDatePicker.focus();
+    }
+  });
+
   hiddenDatePicker.addEventListener("change", function (e) {
     if (e.target.value) {
       selectedDate = new Date(e.target.value);
       updateDateDisplay(selectedDate);
     }
+    hiddenDatePicker.blur();
   });
 
   function updateDateDisplay(dateObj) {

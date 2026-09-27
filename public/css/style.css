@@ -649,7 +649,7 @@ body.menu-open .app-overlay {
   margin-bottom: 14px;
 }
 
-/* แก้ไข Date Picker เด้งซ้ายบน โดยการซ้อนทับ input แบบโปร่งใสไว้บนข้อความ */
+/* แก้ไข Date Picker ให้กดแล้วแสดงปฏิทินได้อย่างถูกต้อง */
 .date-picker-trigger {
   position: relative;
   font-size: 1.1rem;
@@ -672,6 +672,7 @@ body.menu-open .app-overlay {
   border: none;
   padding: 0;
   margin: 0;
+  pointer-events: none;
 }
 
 .modal-header-actions {
