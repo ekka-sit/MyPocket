@@ -1,5 +1,5 @@
 // routes/transactionRoutes.js
-// API endpoints for reading and creating income/expense transactions.
+// API endpoints for reading, creating, updating, and deleting income/expense transactions.
 
 const express = require('express');
 const router = express.Router();
@@ -7,8 +7,7 @@ const Transaction = require('../models/transaction');
 const upload = require('../middleware/upload');
 
 // GET /api/transactions
-// Returns every transaction, newest first. The frontend groups these by
-// date and category itself to build the tree-view dashboard.
+// Returns every transaction, newest first.
 router.get('/', async (req, res) => {
   try {
     const transactions = await Transaction.find().sort({ date: -1, createdAt: -1 });
@@ -19,8 +18,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/transactions
-// Accepts multipart/form-data (an optional "image" file field) plus the
-// text fields: type, date, amount, category, note.
+// Accepts multipart/form-data (an optional "image" file field) plus text fields.
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { type, date, amount, category, note } = req.body;
@@ -31,8 +29,6 @@ router.post('/', upload.single('image'), async (req, res) => {
       });
     }
 
-    // The frontend numpad already evaluates the expression into a plain
-    // number before submitting, so here we just parse and sanity-check it.
     const parsedAmount = Number(amount);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ message: 'จำนวนเงินไม่ถูกต้อง' });
@@ -51,6 +47,58 @@ router.post('/', upload.single('image'), async (req, res) => {
     res.status(201).json(saved);
   } catch (err) {
     res.status(500).json({ message: 'ไม่สามารถบันทึกรายการได้', error: err.message });
+  }
+});
+
+// PUT /api/transactions/:id
+// Updates an existing transaction (supports uploading a new receipt image)
+router.put('/:id', upload.single('image'), async (req, res) => {
+  try {
+    const { type, date, amount, category, note } = req.body;
+    const updateData = {};
+
+    if (type) updateData.type = type;
+    if (date) updateData.date = new Date(date);
+    if (amount) {
+      const parsedAmount = Number(amount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ message: 'จำนวนเงินไม่ถูกต้อง' });
+      }
+      updateData.amount = parsedAmount;
+    }
+    if (category) updateData.category = category;
+    if (note !== undefined) updateData.note = note;
+    if (req.file) {
+      updateData.imagePath = '/uploads/' + req.file.filename;
+    }
+
+    const updated = await Transaction.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'ไม่พบรายการที่ต้องการแก้ไข' });
+    }
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'ไม่สามารถแก้ไขรายการได้', error: err.message });
+  }
+});
+
+// DELETE /api/transactions/:id
+// Deletes a transaction by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await Transaction.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'ไม่พบรายการที่ต้องการลบ' });
+    }
+    res.json({ message: 'ลบรายการสำเร็จ', id: req.params.id });
+  } catch (err) {
+    res.status(500).json({ message: 'ไม่สามารถลบรายการได้', error: err.message });
   }
 });
 
