@@ -878,3 +878,53 @@ body.menu-open .app-overlay {
     width: 78vw;
   }
 }
+
+/* ===================================================
+   2. ย้ายปุ่มบันทึกมาแปะข้างกล่อง Form Modal (แท็บสี่เหลี่ยม)
+   =================================================== */
+
+.fab.active,
+.fab.active-income {
+  position: fixed;
+  top: 50%;
+  left: calc(50% + 204px); /* เกาะขอบขวาของ Modal Card (420px) */
+  transform: translateY(-50%);
+  right: auto;
+  bottom: auto;
+  width: 52px;
+  height: 100px;
+  border-radius: 0 18px 18px 0; /* ทำทรงแท็บสี่เหลี่ยมขอบมนฝั่งขวา */
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+}
+
+.fab.active:hover,
+.fab.active-income:hover {
+  transform: translateY(-50%) scale(1.03);
+}
+
+.fab.active:active,
+.fab.active-income:active {
+  transform: translateY(-50%) scale(0.97);
+}
+
+/* รองรับจอมือถือ (ถ้าจอกว้างไม่พอ ปุ่มจะลงมาแปะขอบล่างแทนเพื่อไม่ให้โดนตัด) */
+@media (max-width: 520px) {
+  .fab.active,
+  .fab.active-income {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .fab.active:hover,
+  .fab.active-income:hover,
+  .fab.active:active,
+  .fab.active-income:active {
+    transform: translateX(-50%);
+  }
+}
