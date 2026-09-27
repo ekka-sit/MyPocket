@@ -254,7 +254,11 @@
         id: tx._id || tx.id,
         name: (tx.note && tx.note.trim() !== "") ? tx.note : catName,
         amount: Number(tx.amount) || 0,
-        type: tx.type || "expense"
+        type: tx.type || "expense",
+        category: catName,
+        note: tx.note || "",
+        date: tx.date,
+        imagePath: tx.imagePath || tx.imageUrl || tx.image || ""
       });
     });
 
@@ -367,6 +371,12 @@
 
       li.appendChild(name);
       li.appendChild(amount);
+
+      li.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openDetailModal(item);
+      });
+
       ul.appendChild(li);
     });
 
@@ -511,14 +521,144 @@
     if (e.target === modalOverlay) closeModal();
   });
 
-  function openModal() {
+  function openAddModal() {
+    editingTransactionId = null;
+    modalViewMode = 'add';
+    modalType = state.mode;
+    selectedDate = new Date();
+
+    transactionModal.classList.remove('modal-detail-mode');
+    document.body.classList.remove('modal-detail-open');
+
+    deleteTxBtn.classList.add('hidden');
+    modalColRight.classList.add('hidden');
+    addModeImageSection.classList.remove('hidden');
+    formInputsGroup.classList.remove('hidden');
+    numpadGrid.classList.remove('hidden');
+
+    editAmountConfirmBtn.classList.add('hidden');
+    amountDeleteBtn.classList.remove('hidden');
+    amountBoxContainer.classList.remove('clickable');
+
+    resetForm();
+    updateModalThemeUI();
+    fetchCategories(modalType);
+    updateDateDisplay(selectedDate);
+
     modalOverlay.classList.remove("hidden");
     fabAdd.classList.add("active");
     fabIcon.textContent = "✓";
-    modalType = state.mode;
+  }
+
+  function openDetailModal(txItem) {
+    editingTransactionId = txItem.id;
+    modalViewMode = 'detail';
+    modalType = txItem.type;
+    selectedDate = parseDbDate(txItem.date);
+
+    transactionModal.classList.add('modal-detail-mode');
+    document.body.classList.add('modal-detail-open');
+
+    deleteTxBtn.classList.remove('hidden');
+    modalColRight.classList.remove('hidden');
+    addModeImageSection.classList.add('hidden');
+    formInputsGroup.classList.remove('hidden');
+    numpadGrid.classList.add('hidden');
+
+    editAmountConfirmBtn.classList.add('hidden');
+    amountDeleteBtn.classList.add('hidden');
+    amountBoxContainer.classList.add('clickable');
+
+    resetForm();
+    expression = String(txItem.amount || 0);
+    amountDisplay.textContent = formatAmount(txItem.amount || 0);
+    noteInput.value = txItem.note || '';
+
     updateModalThemeUI();
     updateDateDisplay(selectedDate);
+
+    fetchCategories(modalType, function () {
+      categorySelect.value = txItem.category || '';
+    });
+
+    if (txItem.imagePath) {
+      detailImagePreview.src = txItem.imagePath;
+      detailImagePreview.classList.remove('hidden');
+      noImageText.classList.add('hidden');
+    } else {
+      detailImagePreview.src = '';
+      detailImagePreview.classList.add('hidden');
+      noImageText.classList.remove('hidden');
+    }
+
+    modalOverlay.classList.remove("hidden");
+    fabAdd.classList.add("active");
+    fabIcon.textContent = "✓";
   }
+
+  function enterEditAmountMode() {
+    if (modalViewMode !== 'detail') return;
+    modalViewMode = 'edit_amount';
+
+    editAmountConfirmBtn.classList.remove('hidden');
+    amountDeleteBtn.classList.remove('hidden');
+    amountBoxContainer.classList.remove('clickable');
+
+    formInputsGroup.classList.add('hidden');
+    numpadGrid.classList.remove('hidden');
+  }
+
+  function exitEditAmountMode() {
+    if (modalViewMode !== 'edit_amount') return;
+    calculateResult();
+    modalViewMode = 'detail';
+
+    editAmountConfirmBtn.classList.add('hidden');
+    amountDeleteBtn.classList.add('hidden');
+    amountBoxContainer.classList.add('clickable');
+
+    numpadGrid.classList.add('hidden');
+    formInputsGroup.classList.remove('hidden');
+  }
+
+  amountBoxContainer.addEventListener('click', function (e) {
+    if (e.target.closest('#editAmountConfirmBtn') || e.target.closest('#amountDeleteBtn')) return;
+    if (modalViewMode === 'detail') {
+      enterEditAmountMode();
+    }
+  });
+
+  editAmountConfirmBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    exitEditAmountMode();
+  });
+
+  amountDeleteBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    expression = expression.slice(0, -1);
+    amountDisplay.textContent = expression || '0';
+  });
+
+  deleteTxBtn.addEventListener('click', function () {
+    if (!editingTransactionId) return;
+    if (confirm("คุณต้องการลบรายการนี้ใช่หรือไม่?")) {
+      fetch('/api/transactions/' + editingTransactionId, {
+        method: 'DELETE'
+      })
+      .then(function (res) {
+        if (res.ok) {
+          closeModal();
+          loadDataAndRender();
+        } else {
+          alert('ลบรายการไม่สำเร็จ');
+        }
+      })
+      .catch(function (err) {
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        console.error(err);
+      });
+    }
+  });
 
   function closeModal() {
     modalOverlay.classList.add("hidden");
@@ -547,15 +687,6 @@
     fetchCategories(modalType);
   });
 
-  // Date Picker
-  dateDisplay.addEventListener("click", function () {
-    if (typeof hiddenDatePicker.showPicker === 'function') {
-      hiddenDatePicker.showPicker();
-    } else {
-      hiddenDatePicker.click();
-    }
-  });
-
   hiddenDatePicker.addEventListener("change", function (e) {
     if (e.target.value) {
       selectedDate = new Date(e.target.value);
@@ -577,9 +708,15 @@
     });
   });
 
-  // ดักจับ Keyboard Keydown + แก้บั๊กพิมพ์หมายเหตุแล้วลบยอดเงิน
   document.addEventListener('keydown', function (e) {
     if (modalOverlay.classList.contains('hidden')) return;
+
+    var active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT' || active.tagName === 'TEXTAREA')) {
+      if (active !== hiddenDatePicker) {
+        return;
+      }
+    }
 
     if ((e.key >= '0' && e.key <= '9') || ['.', '+', '-', '*', '/'].includes(e.key)) {
       handleNumpadInput(e.key);
@@ -650,8 +787,7 @@
     }
   }
 
-  // Categories API & Mini Modal
-  function fetchCategories(type) {
+  function fetchCategories(type, callback) {
     fetch('/api/categories?type=' + type)
       .then(function (res) { return res.json(); })
       .then(function (categories) {
@@ -712,7 +848,6 @@
     });
   });
 
-  // Image Receipt Upload
   cameraBtn.addEventListener('click', function () { receiptInput.click(); });
   receiptInput.addEventListener('change', function (e) {
     var file = e.target.files[0];
@@ -757,7 +892,6 @@
     selectedDate = new Date();
   }
 
-  // Submit Transaction to Database API
   function submitTransaction() {
     if (modalViewMode === 'edit_amount') {
       exitEditAmountMode();
