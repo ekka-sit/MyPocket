@@ -605,7 +605,7 @@ body.menu-open .app-overlay {
 }
 
 /* ===================================================
-   Modal Forms & Numpad Layout Styles
+   Modal Forms, Layout & Numpad Styles
    =================================================== */
 
 .hidden {
@@ -631,26 +631,53 @@ body.menu-open .app-overlay {
   padding: 20px;
   border: 6px solid var(--maroon);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, max-width 0.3s ease;
 }
 
 .modal-card.modal-income {
   border-color: var(--green-header);
 }
 
+.modal-card.modal-detail-mode {
+  max-width: 680px;
+}
+
 .modal-header-custom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
+/* แก้ไข Date Picker เด้งซ้ายบน โดยการซ้อนทับ input แบบโปร่งใสไว้บนข้อความ */
 .date-picker-trigger {
+  position: relative;
   font-size: 1.1rem;
   font-weight: 800;
   cursor: pointer;
   user-select: none;
   color: var(--text-dark);
+  display: inline-flex;
+  align-items: center;
+}
+
+.hidden-date-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .type-toggle-btn {
@@ -665,16 +692,66 @@ body.menu-open .app-overlay {
   transition: background 0.2s;
 }
 
+.delete-tx-btn {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.delete-tx-btn:hover {
+  background: #fca5a5;
+  transform: scale(1.05);
+}
+
+.delete-tx-btn:active {
+  transform: scale(0.95);
+}
+
+/* Modal Body Layout */
+.modal-body-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-card.modal-detail-mode .modal-body-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.modal-col-left, .modal-col-right {
+  width: 100%;
+}
+
+/* กล่องยอดเงิน Unified Amount Display Box */
 .amount-display-container {
   background: #e9ecef;
   border-radius: 14px;
-  padding: 12px 16px;
+  padding: 8px 14px;
   margin-bottom: 14px;
-  text-align: right;
-  min-height: 56px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  min-height: 56px;
+  gap: 10px;
+}
+
+.amount-display-container.clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.amount-display-container.clickable:hover {
+  background: #dee2e6;
 }
 
 .amount-display {
@@ -682,6 +759,35 @@ body.menu-open .app-overlay {
   font-weight: 800;
   color: var(--text-dark);
   word-break: break-all;
+  flex-grow: 1;
+  text-align: right;
+}
+
+.amount-action-btn {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.amount-action-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.amount-action-btn:active {
+  transform: scale(0.92);
+}
+
+.amount-action-btn img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .form-inputs {
@@ -767,6 +873,64 @@ body.menu-open .app-overlay {
   align-items: center;
 }
 
+/* การ์ดรูปภาพฝั่งขวา (DailyDetail) */
+.receipt-card-container {
+  background: #f7f5ee;
+  border: 2px dashed #d1cbb8;
+  border-radius: 16px;
+  min-height: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.detail-camera-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--white);
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  z-index: 5;
+  transition: transform 0.15s ease;
+}
+
+.detail-camera-btn:hover {
+  transform: scale(1.08);
+}
+
+.detail-image-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-image-wrapper img {
+  max-width: 100%;
+  max-height: 230px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.no-image-text {
+  color: #888;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 /* Numpad Layout */
 .numpad-grid {
   display: grid;
@@ -841,9 +1005,56 @@ body.menu-open .app-overlay {
   color: #333;
 }
 
-/* ---------- Responsive ---------- */
+/* ย้ายปุ่มบันทึกมาแปะข้าง Modal Card (แท็บสี่เหลี่ยม) */
+.fab.active,
+.fab.active-income {
+  position: fixed;
+  top: 50%;
+  left: calc(50% + 204px);
+  transform: translateY(-50%);
+  right: auto;
+  bottom: auto;
+  width: 52px;
+  height: 100px;
+  border-radius: 0 18px 18px 0;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+}
 
-@media (max-width: 480px) {
+body.modal-detail-open .fab.active,
+body.modal-detail-open .fab.active-income {
+  left: calc(50% + 334px);
+}
+
+.fab.active:hover,
+.fab.active-income:hover {
+  transform: translateY(-50%) scale(1.03);
+}
+
+.fab.active:active,
+.fab.active-income:active {
+  transform: translateY(-50%) scale(0.97);
+}
+
+/* Responsive */
+@media (max-width: 780px) {
+  .modal-card.modal-detail-mode .modal-body-container {
+    grid-template-columns: 1fr;
+  }
+
+  body.modal-detail-open .fab.active,
+  body.modal-detail-open .fab.active-income {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 48px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 520px) {
   .header-year {
     font-size: 22px;
   }
@@ -877,39 +1088,7 @@ body.menu-open .app-overlay {
   .sidebar {
     width: 78vw;
   }
-}
 
-/* ===================================================
-   2. ย้ายปุ่มบันทึกมาแปะข้างกล่อง Form Modal (แท็บสี่เหลี่ยม)
-   =================================================== */
-
-.fab.active,
-.fab.active-income {
-  position: fixed;
-  top: 50%;
-  left: calc(50% + 204px); /* เกาะขอบขวาของ Modal Card (420px) */
-  transform: translateY(-50%);
-  right: auto;
-  bottom: auto;
-  width: 52px;
-  height: 100px;
-  border-radius: 0 18px 18px 0; /* ทำทรงแท็บสี่เหลี่ยมขอบมนฝั่งขวา */
-  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.25);
-  z-index: 100;
-}
-
-.fab.active:hover,
-.fab.active-income:hover {
-  transform: translateY(-50%) scale(1.03);
-}
-
-.fab.active:active,
-.fab.active-income:active {
-  transform: translateY(-50%) scale(0.97);
-}
-
-/* รองรับจอมือถือ (ถ้าจอกว้างไม่พอ ปุ่มจะลงมาแปะขอบล่างแทนเพื่อไม่ให้โดนตัด) */
-@media (max-width: 520px) {
   .fab.active,
   .fab.active-income {
     top: auto;

@@ -76,7 +76,7 @@
     <span id="fabIcon" aria-hidden="true">+</span>
   </button>
 
-  <!-- Modal ฟอร์มบันทึกรายการ -->
+  <!-- Modal ฟอร์มบันทึก / ดูรายละเอียดรายการ -->
   <div id="modalOverlay" class="modal-overlay hidden">
     <div id="transactionModal" class="modal-card modal-expense">
       
@@ -84,63 +84,101 @@
       <div class="modal-header-custom">
         <div id="dateDisplay" class="date-picker-trigger">
           <span id="dateText">25 / Sep / 2026</span>
-          <input type="date" id="hiddenDatePicker" hidden>
+          <input type="date" id="hiddenDatePicker" class="hidden-date-input">
         </div>
-        <button type="button" id="typeToggleBtn" class="type-toggle-btn">รายจ่าย</button>
+        <div class="modal-header-actions">
+          <button type="button" id="typeToggleBtn" class="type-toggle-btn">รายจ่าย</button>
+          <button type="button" id="deleteTxBtn" class="delete-tx-btn hidden" aria-label="ลบรายการ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9534f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <!-- Amount Display Area -->
-      <div class="amount-display-container">
-        <div id="amountDisplay" class="amount-display">0</div>
-      </div>
-
-      <!-- Form Inputs Container -->
-      <div class="form-inputs">
-        <div class="input-group-custom">
-          <label for="categorySelect">หมวดหมู่</label>
-          <select id="categorySelect" class="form-control-custom">
-            <option value="" disabled selected>เลือกหมวดหมู่</option>
-          </select>
-        </div>
-
-        <div class="input-group-custom">
-          <label for="noteInput">หมายเหตุ</label>
-          <input type="text" id="noteInput" class="form-control-custom" placeholder="กรอกหมายเหตุ (เช่น อาหารเย็น)">
-        </div>
-
-        <!-- Camera & Image Upload -->
-        <div class="image-upload-section">
-          <button type="button" id="cameraBtn" class="camera-btn">📷 ถ่ายภาพ / อัปโหลดใบเสร็จ</button>
-          <input type="file" id="receiptInput" accept="image/*" hidden>
+      <!-- Modal Body (1-col สำหรับบันทึกใหม่, 2-col สำหรับ DailyDetail) -->
+      <div id="modalBody" class="modal-body-container">
+        
+        <!-- ฝั่งซ้าย / ฟอร์มหลัก -->
+        <div class="modal-col-left">
           
-          <div id="imagePreviewContainer" class="image-preview-container hidden">
-            <img id="imagePreview" src="" alt="ใบเสร็จ">
-            <button type="button" id="removeImageBtn" class="remove-img-btn">&times;</button>
+          <!-- กล่องยอดเงิน Unified -->
+          <div id="amountBoxContainer" class="amount-display-container">
+            <button type="button" id="editAmountConfirmBtn" class="amount-action-btn edit-confirm-btn hidden" aria-label="ยืนยันยอดเงิน">
+              <img src="images/correct.png" alt="ตกลง">
+            </button>
+            
+            <div id="amountDisplay" class="amount-display">0</div>
+            
+            <button type="button" id="amountDeleteBtn" class="amount-action-btn delete-num-btn" aria-label="ลบตัวเลข">
+              <img src="images/delete_btn.png" alt="ลบ">
+            </button>
+          </div>
+
+          <!-- ช่องหมวดหมู่ และ หมายเหตุ -->
+          <div id="formInputsGroup" class="form-inputs">
+            <div class="input-group-custom" id="categoryGroup">
+              <label for="categorySelect">หมวดหมู่</label>
+              <select id="categorySelect" class="form-control-custom">
+                <option value="" disabled selected>เลือกหมวดหมู่</option>
+              </select>
+            </div>
+
+            <div class="input-group-custom" id="noteGroup">
+              <label for="noteInput">หมายเหตุ</label>
+              <input type="text" id="noteInput" class="form-control-custom" placeholder="กรอกหมายเหตุ (เช่น อาหารเย็น)">
+            </div>
+
+            <!-- โซนอัปโหลดรูปภาพสำหรับหน้าเพิ่มรายการใหม่ -->
+            <div id="addModeImageSection" class="image-upload-section">
+              <button type="button" id="cameraBtn" class="camera-btn">📷 ถ่ายภาพ / อัปโหลดใบเสร็จ</button>
+              <input type="file" id="receiptInput" accept="image/*" hidden>
+              
+              <div id="imagePreviewContainer" class="image-preview-container hidden">
+                <img id="imagePreview" src="" alt="ใบเสร็จ">
+                <button type="button" id="removeImageBtn" class="remove-img-btn">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Numpad Grid -->
+          <div id="numpadGrid" class="numpad-grid">
+            <button type="button" class="numpad-btn" data-val="7">7</button>
+            <button type="button" class="numpad-btn" data-val="8">8</button>
+            <button type="button" class="numpad-btn" data-val="9">9</button>
+            <button type="button" class="numpad-btn op-btn" data-val="+">+</button>
+
+            <button type="button" class="numpad-btn" data-val="4">4</button>
+            <button type="button" class="numpad-btn" data-val="5">5</button>
+            <button type="button" class="numpad-btn" data-val="6">6</button>
+            <button type="button" class="numpad-btn op-btn" data-val="-">-</button>
+
+            <button type="button" class="numpad-btn" data-val="1">1</button>
+            <button type="button" class="numpad-btn" data-val="2">2</button>
+            <button type="button" class="numpad-btn" data-val="3">3</button>
+            <button type="button" class="numpad-btn op-btn" data-val="*">&times;</button>
+
+            <button type="button" class="numpad-btn" data-val="0">0</button>
+            <button type="button" class="numpad-btn" data-val=".">.</button>
+            <button type="button" class="numpad-btn action-btn" data-val="=">=</button>
+            <button type="button" class="numpad-btn op-btn" data-val="/">&divide;</button>
+          </div>
+
+        </div>
+
+        <!-- ฝั่งขวา (กล่องแสดงรูปภาพใบเสร็จสำหรับ DailyDetail) -->
+        <div id="modalColRight" class="modal-col-right hidden">
+          <div class="receipt-card-container">
+            <button type="button" id="detailCameraBtn" class="detail-camera-btn" aria-label="ถ่ายภาพ/อัปโหลด">📷</button>
+            <input type="file" id="detailReceiptInput" accept="image/*" hidden>
+            <div id="detailImageWrapper" class="detail-image-wrapper">
+              <img id="detailImagePreview" src="" alt="ใบเสร็จ" class="hidden">
+              <span id="noImageText" class="no-image-text">ไม่มีรูปภาพ</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Numpad Grid Layout -->
-      <div class="numpad-grid">
-        <button type="button" class="numpad-btn" data-val="7">7</button>
-        <button type="button" class="numpad-btn" data-val="8">8</button>
-        <button type="button" class="numpad-btn" data-val="9">9</button>
-        <button type="button" class="numpad-btn op-btn" data-val="+">+</button>
-
-        <button type="button" class="numpad-btn" data-val="4">4</button>
-        <button type="button" class="numpad-btn" data-val="5">5</button>
-        <button type="button" class="numpad-btn" data-val="6">6</button>
-        <button type="button" class="numpad-btn op-btn" data-val="-">-</button>
-
-        <button type="button" class="numpad-btn" data-val="1">1</button>
-        <button type="button" class="numpad-btn" data-val="2">2</button>
-        <button type="button" class="numpad-btn" data-val="3">3</button>
-        <button type="button" class="numpad-btn op-btn" data-val="*">&times;</button>
-
-        <button type="button" class="numpad-btn" data-val="0">0</button>
-        <button type="button" class="numpad-btn" data-val=".">.</button>
-        <button type="button" class="numpad-btn action-btn" data-val="=">=</button>
-        <button type="button" class="numpad-btn op-btn" data-val="/">&divide;</button>
       </div>
 
     </div>
