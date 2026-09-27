@@ -551,6 +551,8 @@
   }
 
   function openDetailModal(txItem) {
+    resetForm();
+
     editingTransactionId = txItem.id;
     modalViewMode = 'detail';
     modalType = txItem.type;
@@ -569,7 +571,6 @@
     amountDeleteBtn.classList.add('hidden');
     amountBoxContainer.classList.add('clickable');
 
-    resetForm();
     expression = String(txItem.amount || 0);
     amountDisplay.textContent = formatAmount(txItem.amount || 0);
     noteInput.value = txItem.note || '';
