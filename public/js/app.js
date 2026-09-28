@@ -289,9 +289,15 @@
 
   function groupTransactions(rawList) {
     var dayMap = {};
+    var isYearMode = (state.currentPage === "statistic" && window.MyPocketApp && window.MyPocketApp.statisticTimeMode === "year");
 
     rawList.forEach(function (tx) {
       var d = parseDbDate(tx.date);
+
+      // กรองเฉพาะข้อมูลที่ตรงกับ Year และ Month ที่เลือกอยู่
+      if (d.getFullYear() !== state.year) return;
+      if (!isYearMode && d.getMonth() !== state.monthIndex) return;
+
       var dateStr = d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
 
       if (!dayMap[dateStr]) {

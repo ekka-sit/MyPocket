@@ -7,10 +7,27 @@ const Transaction = require('../models/transaction');
 const upload = require('../middleware/upload');
 
 // GET /api/transactions
-// Returns every transaction, newest first.
+// Returns transactions filtered by year and month if provided, newest first.
 router.get('/', async (req, res) => {
   try {
-    const transactions = await Transaction.find().sort({ date: -1, createdAt: -1 });
+    const { year, month } = req.query;
+    let query = {};
+
+    if (year) {
+      const y = parseInt(year, 10);
+      if (month) {
+        const m = parseInt(month, 10) - 1; // JS Date index (0 = Jan, 8 = Sep)
+        const startDate = new Date(y, m, 1, 0, 0, 0, 0);
+        const endDate = new Date(y, m + 1, 0, 23, 59, 59, 999);
+        query.date = { $gte: startDate, $lte: endDate };
+      } else {
+        const startDate = new Date(y, 0, 1, 0, 0, 0, 0);
+        const endDate = new Date(y, 11, 31, 23, 59, 59, 999);
+        query.date = { $gte: startDate, $lte: endDate };
+      }
+    }
+
+    const transactions = await Transaction.find(query).sort({ date: -1, createdAt: -1 });
     res.json(transactions);
   } catch (err) {
     res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลรายการได้', error: err.message });
