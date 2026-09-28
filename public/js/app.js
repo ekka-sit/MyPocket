@@ -47,6 +47,7 @@
   // Modal Elements
   var modalOverlay = document.getElementById("modalOverlay");
   var transactionModal = document.getElementById("transactionModal");
+  var closeModalBtn = document.getElementById("closeModalBtn");
   var typeToggleBtn = document.getElementById("typeToggleBtn");
   var deleteTxBtn = document.getElementById("deleteTxBtn");
   
@@ -520,6 +521,10 @@
   modalOverlay.addEventListener("click", function (e) {
     if (e.target === modalOverlay) closeModal();
   });
+
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener("click", closeModal);
+  }
 
   function openAddModal() {
     editingTransactionId = null;

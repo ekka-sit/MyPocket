@@ -624,6 +624,7 @@ body.menu-open .app-overlay {
 }
 
 .modal-card {
+  position: relative; /* เพิ่มเพื่อให้แท็บปิดอิงตำแหน่งมุมขอบบนซ้ายของการ์ดได้ถูกต้อง */
   background: var(--white);
   width: 100%;
   max-width: 420px;
@@ -640,6 +641,36 @@ body.menu-open .app-overlay {
 
 .modal-card.modal-detail-mode {
   max-width: 680px;
+}
+
+/* สไตล์ปุ่มปิดทรงแท็บลอย (✕) ยื่นแปะตรงมุมขอบบนซ้าย */
+.modal-close-tab {
+  position: absolute;
+  top: -42px;
+  left: 18px;
+  background: var(--maroon);
+  color: var(--white);
+  border: none;
+  padding: 6px 18px;
+  border-radius: 14px 14px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease, transform 0.15s ease;
+  z-index: 10;
+}
+
+.modal-card.modal-income .modal-close-tab {
+  background: var(--green-header);
+}
+
+.modal-close-tab:hover {
+  transform: translateY(-2px);
+}
+
+.modal-close-tab:active {
+  transform: translateY(0);
 }
 
 .modal-header-custom {
