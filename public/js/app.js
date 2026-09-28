@@ -14,7 +14,8 @@
     monthIndex: 8, // 0 = Jan, 8 = Sep
     mode: "expense", // "expense", "income", "net"
     currentPage: "home", // "home", "calendar", "statistic"
-    currentDaysData: []
+    currentDaysData: [],
+    rawTransactions: []
   };
 
   // Modal Form State
@@ -44,6 +45,7 @@
 
   var dayList = document.getElementById("dayList");
   var calendarView = document.getElementById("calendarView");
+  var statisticView = document.getElementById("statisticView");
   var fabAdd = document.getElementById("fabAdd");
   var fabIcon = document.getElementById("fabIcon");
 
@@ -130,15 +132,35 @@
     });
   });
 
+  function updateMonthTriggerState() {
+    var isYearMode = (state.currentPage === "statistic" && window.MyPocketApp && window.MyPocketApp.statisticTimeMode === "year");
+    if (isYearMode) {
+      monthTrigger.disabled = true;
+      monthTrigger.classList.add("disabled");
+    } else {
+      monthTrigger.disabled = false;
+      monthTrigger.classList.remove("disabled");
+    }
+  }
+
   function switchPage(page) {
     if (page === "calendar") {
       dayList.classList.add("hidden");
+      if (statisticView) statisticView.classList.add("hidden");
       calendarView.classList.remove("hidden");
+    } else if (page === "statistic") {
+      state.mode = "net";
+      if (pocketBadge) pocketBadge.setAttribute("data-mode", state.mode);
+      dayList.classList.add("hidden");
+      calendarView.classList.add("hidden");
+      if (statisticView) statisticView.classList.remove("hidden");
     } else {
       calendarView.classList.add("hidden");
+      if (statisticView) statisticView.classList.add("hidden");
       dayList.classList.remove("hidden");
     }
-    render();
+    updateMonthTriggerState();
+    loadDataAndRender();
   }
 
   /* ---------------------------------------------------------
@@ -215,6 +237,7 @@
       btn.textContent = label;
       btn.setAttribute("role", "option");
       btn.addEventListener("click", function () {
+        if (monthTrigger.disabled) return;
         state.monthIndex = index;
         monthTrigger.textContent = label;
         closePicker(monthTrigger, monthList);
@@ -233,6 +256,7 @@
   });
 
   monthTrigger.addEventListener("click", function (event) {
+    if (monthTrigger.disabled) return;
     event.stopPropagation();
     buildMonthList();
     togglePicker(monthTrigger, monthList);
@@ -304,8 +328,13 @@
   }
 
   function loadDataAndRender() {
-    var monthQuery = state.monthIndex + 1;
-    var url = '/api/transactions?year=' + state.year + '&month=' + monthQuery;
+    updateMonthTriggerState();
+    var isYearMode = (state.currentPage === "statistic" && window.MyPocketApp && window.MyPocketApp.statisticTimeMode === "year");
+    var url = '/api/transactions?year=' + state.year;
+    if (!isYearMode) {
+      var monthQuery = state.monthIndex + 1;
+      url += '&month=' + monthQuery;
+    }
 
     fetch(url)
       .then(function (res) {
@@ -313,11 +342,13 @@
         return res.json();
       })
       .then(function (rawTransactions) {
-        state.currentDaysData = groupTransactions(rawTransactions);
+        state.rawTransactions = rawTransactions || [];
+        state.currentDaysData = groupTransactions(state.rawTransactions);
         render();
       })
       .catch(function (err) {
         console.warn("ไม่สามารถดึงข้อมูลจาก Server ได้:", err);
+        state.rawTransactions = [];
         state.currentDaysData = [];
         render();
       });
@@ -560,9 +591,13 @@
     if (state.currentPage === "home") {
       renderDayList();
     }
-    // ส่งสัญญาณเตือนให้ calendar.js เรนเดอร์ใหม่ถ้าเปิดหน้าปฏิทินอยู่
-    if (window.MyPocketApp && typeof window.MyPocketApp.onRender === "function") {
-      window.MyPocketApp.onRender();
+    if (window.MyPocketApp) {
+      if (typeof window.MyPocketApp.onRender === "function") {
+        window.MyPocketApp.onRender();
+      }
+      if (typeof window.MyPocketApp.onStatisticRender === "function") {
+        window.MyPocketApp.onStatisticRender();
+      }
     }
   }
 
@@ -1018,14 +1053,17 @@
   }
 
   /* ---------------------------------------------------------
-   * Global Export for `calendar.js`
+   * Global Export for `calendar.js` & `statistic.js`
    * ------------------------------------------------------- */
   window.MyPocketApp = {
     state: state,
     MONTHS: MONTHS,
     formatAmount: formatAmount,
     parseDbDate: parseDbDate,
-    onRender: null
+    loadDataAndRender: loadDataAndRender,
+    statisticTimeMode: "month", // "month" or "year"
+    onRender: null,
+    onStatisticRender: null
   };
 
   /* ---------------------------------------------------------

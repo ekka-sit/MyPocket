@@ -75,6 +75,25 @@
         <!-- หน้า Calendar View (ตารางปฏิทิน) -->
         <div class="calendar-view hidden" id="calendarView"></div>
 
+        <!-- หน้า Statistic View (สถิติกราฟวงกลม) -->
+        <div class="statistic-view hidden" id="statisticView">
+          <div class="stat-filter-bar">
+            <div class="stat-time-toggle">
+              <button type="button" class="stat-time-btn active" id="statMonthBtn">เดือน (Month)</button>
+              <button type="button" class="stat-time-btn" id="statYearBtn">ปี (Year)</button>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-chart-header">
+              <h2 class="stat-chart-title" id="statChartTitle">สถิติการเงิน</h2>
+              <span class="stat-chart-subtitle" id="statChartSubtitle">ประจำเดือน Sep 2026</span>
+            </div>
+            <div class="stat-chart-container" id="statChartContainer"></div>
+            <div class="stat-legend-container" id="statLegendContainer"></div>
+          </div>
+        </div>
+
       </div>
     </main>
 
@@ -189,9 +208,7 @@
           <span id="calendarDailyDateText">25 / Sep / 2026</span>
         </div>
       </div>
-      <div id="calendarDailyBody" class="modal-body-container">
-        <!-- รายการ Tree View จะถูกวาดโดย calendar.js -->
-      </div>
+      <div id="calendarDailyBody" class="modal-body-container"></div>
     </div>
   </div>
 
@@ -210,5 +227,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
   <script src="js/app.js"></script>
   <script src="js/calendar.js"></script>
+  <script src="js/statistic.js"></script>
 </body>
 </html>
