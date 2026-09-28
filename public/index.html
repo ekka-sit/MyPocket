@@ -50,7 +50,8 @@
             <ul class="picker-list" id="monthList" role="listbox" tabindex="-1" hidden></ul>
           </div>
 
-          <button type="button" class="pocket-badge" id="pocketBadge" aria-pressed="false" aria-label="สลับโหมดรายรับ/รายจ่าย">
+          <!-- Pocket Badge (3 โหมด: Expense / Income / Net Income) -->
+          <button type="button" class="pocket-badge" id="pocketBadge" data-mode="expense" aria-label="สลับโหมดPocket Badge">
             <span class="pocket-badge-inner" id="pocketBadgeInner">
               <span class="pocket-badge-face pocket-badge-face--expense">
                 <img src="images/pocket.png" alt="" class="pocket-badge-icon">
@@ -60,11 +61,19 @@
                 <img src="images/pocket_in.png" alt="" class="pocket-badge-icon">
                 <span class="pocket-badge-amount" id="incomeAmount">0</span>
               </span>
+              <span class="pocket-badge-face pocket-badge-face--net">
+                <img src="images/sum.png" alt="" class="pocket-badge-icon">
+                <span class="pocket-badge-amount" id="netAmount">0</span>
+              </span>
             </span>
           </button>
         </div>
 
+        <!-- หน้า Home View (รายการแบบ Accordion) -->
         <div class="day-list" id="dayList"></div>
+
+        <!-- หน้า Calendar View (ตารางปฏิทิน) -->
+        <div class="calendar-view hidden" id="calendarView"></div>
 
       </div>
     </main>
@@ -76,14 +85,12 @@
     <span id="fabIcon" aria-hidden="true">+</span>
   </button>
 
-  <!-- Modal ฟอร์มบันทึก / ดูรายละเอียดรายการ -->
+  <!-- Modal ฟอร์มบันทึก / ดูรายละเอียดรายการ (Home View) -->
   <div id="modalOverlay" class="modal-overlay hidden">
     <div id="transactionModal" class="modal-card modal-expense">
       
-      <!-- ปุ่มปิดทรงแท็บลอย (✕) ยื่นแปะมุมขอบบนซ้าย -->
       <button type="button" id="closeModalBtn" class="modal-close-tab" aria-label="ปิดหน้าต่าง">✕</button>
 
-      <!-- Modal Header -->
       <div class="modal-header-custom">
         <div id="dateDisplay" class="date-picker-trigger">
           <span id="dateText">25 / Sep / 2026</span>
@@ -100,26 +107,18 @@
         </div>
       </div>
 
-      <!-- Modal Body (1-col สำหรับบันทึกใหม่, 2-col สำหรับ DailyDetail) -->
       <div id="modalBody" class="modal-body-container">
-        
-        <!-- ฝั่งซ้าย / ฟอร์มหลัก -->
         <div class="modal-col-left">
-          
-          <!-- กล่องยอดเงิน Unified -->
           <div id="amountBoxContainer" class="amount-display-container">
             <button type="button" id="editAmountConfirmBtn" class="amount-action-btn edit-confirm-btn hidden" aria-label="ยืนยันยอดเงิน">
               <img src="images/correct.png" alt="ตกลง">
             </button>
-            
             <div id="amountDisplay" class="amount-display">0</div>
-            
             <button type="button" id="amountDeleteBtn" class="amount-action-btn delete-num-btn" aria-label="ลบตัวเลข">
               <img src="images/delete_btn.png" alt="ลบ">
             </button>
           </div>
 
-          <!-- ช่องหมวดหมู่ และ หมายเหตุ -->
           <div id="formInputsGroup" class="form-inputs">
             <div class="input-group-custom" id="categoryGroup">
               <label for="categorySelect">หมวดหมู่</label>
@@ -133,11 +132,9 @@
               <input type="text" id="noteInput" class="form-control-custom" placeholder="กรอกหมายเหตุ (เช่น อาหารเย็น)">
             </div>
 
-            <!-- โซนอัปโหลดรูปภาพสำหรับหน้าเพิ่มรายการใหม่ -->
             <div id="addModeImageSection" class="image-upload-section">
               <button type="button" id="cameraBtn" class="camera-btn">📷 ถ่ายภาพ / อัปโหลดใบเสร็จ</button>
               <input type="file" id="receiptInput" accept="image/*" hidden>
-              
               <div id="imagePreviewContainer" class="image-preview-container hidden">
                 <img id="imagePreview" src="" alt="ใบเสร็จ">
                 <button type="button" id="removeImageBtn" class="remove-img-btn">&times;</button>
@@ -145,7 +142,6 @@
             </div>
           </div>
 
-          <!-- Numpad Grid -->
           <div id="numpadGrid" class="numpad-grid">
             <button type="button" class="numpad-btn" data-val="7">7</button>
             <button type="button" class="numpad-btn" data-val="8">8</button>
@@ -167,10 +163,8 @@
             <button type="button" class="numpad-btn action-btn" data-val="=">=</button>
             <button type="button" class="numpad-btn op-btn" data-val="/">&divide;</button>
           </div>
-
         </div>
 
-        <!-- ฝั่งขวา (กล่องแสดงรูปภาพใบเสร็จสำหรับ DailyDetail) -->
         <div id="modalColRight" class="modal-col-right hidden">
           <div class="receipt-card-container">
             <button type="button" id="detailCameraBtn" class="detail-camera-btn" aria-label="ถ่ายภาพ/อัปโหลด">📷</button>
@@ -181,9 +175,23 @@
             </div>
           </div>
         </div>
-
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal ดูรายละเอียดประจำวันสำหรับหน้า Calendar (CalendarDailyModal) -->
+  <div id="calendarDailyModalOverlay" class="modal-overlay hidden">
+    <div id="calendarDailyModal" class="modal-card modal-calendar-daily">
+      <button type="button" id="closeCalendarDailyModalBtn" class="modal-close-tab" aria-label="ปิดหน้าต่าง">✕</button>
+      <div class="modal-header-custom">
+        <div class="date-picker-trigger">
+          <span id="calendarDailyDateText">25 / Sep / 2026</span>
+        </div>
+      </div>
+      <div id="calendarDailyBody" class="modal-body-container">
+        <!-- รายการ Tree View จะถูกวาดโดย calendar.js -->
+      </div>
     </div>
   </div>
 
@@ -201,5 +209,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/calendar.js"></script>
 </body>
 </html>

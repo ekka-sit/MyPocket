@@ -12,7 +12,8 @@
   var state = {
     year: 2026,
     monthIndex: 8, // 0 = Jan, 8 = Sep
-    mode: "expense",
+    mode: "expense", // "expense", "income", "net"
+    currentPage: "home", // "home", "calendar", "statistic"
     currentDaysData: []
   };
 
@@ -39,8 +40,10 @@
   var pocketBadge = document.getElementById("pocketBadge");
   var expenseAmountEl = document.getElementById("expenseAmount");
   var incomeAmountEl = document.getElementById("incomeAmount");
+  var netAmountEl = document.getElementById("netAmount");
 
   var dayList = document.getElementById("dayList");
+  var calendarView = document.getElementById("calendarView");
   var fabAdd = document.getElementById("fabAdd");
   var fabIcon = document.getElementById("fabIcon");
 
@@ -84,7 +87,7 @@
   var saveCategoryBtn = document.getElementById("saveCategoryBtn");
 
   /* ---------------------------------------------------------
-   * Sidebar Menu Controls
+   * Sidebar Menu Controls & Page Navigation
    * ------------------------------------------------------- */
   function openMenu() {
     document.body.classList.add("menu-open");
@@ -112,13 +115,31 @@
   sidebar.querySelectorAll(".sidebar-link").forEach(function (link) {
     link.addEventListener("click", function (event) {
       event.preventDefault();
+      var page = link.getAttribute("data-page");
+
       sidebar.querySelectorAll(".sidebar-link").forEach(function (el) {
         el.classList.remove("active");
       });
       link.classList.add("active");
       closeMenu();
+
+      if (page) {
+        state.currentPage = page;
+        switchPage(page);
+      }
     });
   });
+
+  function switchPage(page) {
+    if (page === "calendar") {
+      dayList.classList.add("hidden");
+      calendarView.classList.remove("hidden");
+    } else {
+      calendarView.classList.add("hidden");
+      dayList.classList.remove("hidden");
+    }
+    render();
+  }
 
   /* ---------------------------------------------------------
    * Popover Helper (Year / Month Pickers)
@@ -218,12 +239,19 @@
   });
 
   /* ---------------------------------------------------------
-   * Pocket Badge — 3D Flip & Mode Switch
+   * Pocket Badge — 3 Mode Loop (Expense -> Income -> Net)
    * ------------------------------------------------------- */
   pocketBadge.addEventListener("click", function () {
-    state.mode = state.mode === "expense" ? "income" : "expense";
-    pocketBadge.setAttribute("aria-pressed", state.mode === "income" ? "true" : "false");
-    renderDayList();
+    if (state.mode === "expense") {
+      state.mode = "income";
+    } else if (state.mode === "income") {
+      state.mode = "net";
+    } else {
+      state.mode = "expense";
+    }
+
+    pocketBadge.setAttribute("data-mode", state.mode);
+    render();
   });
 
   /* ---------------------------------------------------------
@@ -310,12 +338,13 @@
 
       day.groups.forEach(function (group) {
         var items = group.items.filter(function (item) {
+          if (mode === "net") return true;
           return item.type === mode;
         });
 
         if (items.length > 0) {
           var total = items.reduce(function (sum, item) {
-            return sum + item.amount;
+            return item.type === 'expense' ? sum - item.amount : sum + item.amount;
           }, 0);
           groups.push({ name: group.name, total: total, items: items });
         }
@@ -333,7 +362,7 @@
   }
 
   function computeMonthTotals(days) {
-    var totals = { expense: 0, income: 0 };
+    var totals = { expense: 0, income: 0, net: 0 };
 
     days.forEach(function (day) {
       day.groups.forEach(function (group) {
@@ -345,6 +374,7 @@
       });
     });
 
+    totals.net = totals.income - totals.expense;
     return totals;
   }
 
@@ -352,6 +382,14 @@
     var totals = computeMonthTotals(state.currentDaysData);
     expenseAmountEl.textContent = formatAmount(totals.expense);
     incomeAmountEl.textContent = formatAmount(totals.income);
+
+    if (totals.net > 0) {
+      netAmountEl.textContent = "+" + formatAmount(totals.net);
+    } else if (totals.net < 0) {
+      netAmountEl.textContent = "-" + formatAmount(Math.abs(totals.net));
+    } else {
+      netAmountEl.textContent = "0";
+    }
   }
 
   function buildSubitems(items) {
@@ -368,7 +406,13 @@
 
       var amount = document.createElement("span");
       amount.className = "tx-subitem-amount";
-      amount.textContent = formatAmount(item.amount);
+      
+      if (state.mode === "net") {
+        amount.textContent = (item.type === "expense" ? "-" : "+") + formatAmount(item.amount);
+        amount.style.color = item.type === "expense" ? "var(--maroon)" : "var(--green-header)";
+      } else {
+        amount.textContent = formatAmount(item.amount);
+      }
 
       li.appendChild(name);
       li.appendChild(amount);
@@ -395,7 +439,11 @@
     name.textContent = group.name;
 
     var total = document.createElement("span");
-    total.textContent = formatAmount(group.total);
+    if (state.mode === "net") {
+      total.textContent = (group.total >= 0 ? "+" : "") + formatAmount(group.total);
+    } else {
+      total.textContent = formatAmount(Math.abs(group.total));
+    }
 
     header.appendChild(name);
     header.appendChild(total);
@@ -450,7 +498,12 @@
 
     var amount = document.createElement("span");
     amount.className = "day-total-amount day-total-amount--" + mode;
-    amount.textContent = formatAmount(day.total);
+    
+    if (mode === "net") {
+      amount.textContent = (day.total >= 0 ? "+" : "") + formatAmount(day.total);
+    } else {
+      amount.textContent = formatAmount(Math.abs(day.total));
+    }
 
     totalWrap.appendChild(coin);
     totalWrap.appendChild(amount);
@@ -492,7 +545,7 @@
       empty.className = "empty-state";
       empty.textContent = state.mode === "expense"
         ? "ยังไม่มีรายการรายจ่ายในเดือนนี้"
-        : "ยังไม่มีรายการรายรับในเดือนนี้";
+        : (state.mode === "income" ? "ยังไม่มีรายการรายรับในเดือนนี้" : "ยังไม่มีรายการในเดือนนี้");
       dayList.appendChild(empty);
       return;
     }
@@ -504,7 +557,13 @@
 
   function render() {
     updateBadgeAmounts();
-    renderDayList();
+    if (state.currentPage === "home") {
+      renderDayList();
+    }
+    // ส่งสัญญาณเตือนให้ calendar.js เรนเดอร์ใหม่ถ้าเปิดหน้าปฏิทินอยู่
+    if (window.MyPocketApp && typeof window.MyPocketApp.onRender === "function") {
+      window.MyPocketApp.onRender();
+    }
   }
 
   /* ---------------------------------------------------------
@@ -529,7 +588,7 @@
   function openAddModal() {
     editingTransactionId = null;
     modalViewMode = 'add';
-    modalType = state.mode;
+    modalType = state.mode === "income" ? "income" : "expense";
     selectedDate = new Date();
 
     transactionModal.classList.remove('modal-detail-mode');
@@ -693,7 +752,6 @@
     fetchCategories(modalType);
   });
 
-  /* ---------- แก้ไขการเปิดหน้าต่าง Calendar Date Picker ---------- */
   dateDisplay.addEventListener("click", function () {
     if (typeof hiddenDatePicker.showPicker === "function") {
       try {
@@ -958,6 +1016,17 @@
       console.error(err);
     });
   }
+
+  /* ---------------------------------------------------------
+   * Global Export for `calendar.js`
+   * ------------------------------------------------------- */
+  window.MyPocketApp = {
+    state: state,
+    MONTHS: MONTHS,
+    formatAmount: formatAmount,
+    parseDbDate: parseDbDate,
+    onRender: null
+  };
 
   /* ---------------------------------------------------------
    * Init

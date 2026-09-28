@@ -7,6 +7,7 @@
   --green-pastel-soft: #e6f4e4;
   --maroon: #8a3b3b;
   --maroon-dark: #7a3232;
+  --net-color: #e8a101;
   --gold: #e8b923;
   --gold-dark: #c99a12;
   --tree-line: #5c8a5b;
@@ -262,15 +263,15 @@ ul {
   background: rgba(20, 107, 46, 0.12);
 }
 
-/* ---------- Monthly pocket badge — 3D flip ---------- */
+/* ---------- Monthly Pocket Badge ---------- */
 
 .pocket-badge {
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
-  perspective: 1000px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .pocket-badge-inner {
@@ -278,24 +279,21 @@ ul {
   display: block;
   width: 168px;
   height: 46px;
-  transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
-  transform-style: preserve-3d;
-}
-
-.pocket-badge[aria-pressed="true"] .pocket-badge-inner {
-  transform: rotateY(180deg);
 }
 
 .pocket-badge-face {
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
   border-radius: 999px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 18px 0 8px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
 }
 
 .pocket-badge-face--expense {
@@ -304,7 +302,18 @@ ul {
 
 .pocket-badge-face--income {
   background: var(--green-header);
-  transform: rotateY(180deg);
+}
+
+.pocket-badge-face--net {
+  background: var(--net-color);
+}
+
+.pocket-badge[data-mode="expense"] .pocket-badge-face--expense,
+.pocket-badge[data-mode="income"] .pocket-badge-face--income,
+.pocket-badge[data-mode="net"] .pocket-badge-face--net {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 .pocket-badge-icon {
@@ -400,6 +409,10 @@ ul {
   background: var(--green-header);
 }
 
+.day-total-amount--net {
+  background: var(--net-color);
+}
+
 .day-card-body {
   max-height: 0;
   overflow: hidden;
@@ -493,6 +506,158 @@ ul {
   top: -50%;
   bottom: 50%;
 } 
+
+/* ---------- Calendar View Styles ---------- */
+
+.calendar-view {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  width: 100%;
+}
+
+.calendar-header-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.calendar-day-name {
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 8px 0;
+  border-radius: 8px;
+  color: var(--white);
+  transition: background 0.3s ease;
+}
+
+/* Dynamic Theme Variable Colors for Grid & Header */
+.calendar-theme-expense {
+  --cal-grid-line: #8a3b3b;
+  --cal-grid-hover: #ebdcc5;
+}
+.calendar-theme-income {
+  --cal-grid-line: #1a7a35;
+  --cal-grid-hover: #ebdcc5;
+}
+.calendar-theme-net {
+  --cal-grid-line: #e8a101;
+  --cal-grid-hover: #ebdcc5;
+}
+
+.calendar-theme-expense .calendar-day-name {
+  background: var(--maroon);
+}
+.calendar-theme-income .calendar-day-name {
+  background: var(--green-header);
+}
+.calendar-theme-net .calendar-day-name {
+  background: var(--net-color);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--cal-grid-line, #e8a101);
+  border: 2px solid var(--cal-grid-line, #e8a101);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.calendar-cell {
+  background: #f6f2e8;
+  border: none;
+  border-radius: 0;
+  min-height: 78px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.calendar-cell:hover {
+  background: var(--cal-grid-hover, #ebdcc5);
+}
+
+/* ปรับแต่งสำหรับเซลล์ของวันที่ไม่ได้อยู่ในเดือนปัจจุบัน */
+.calendar-cell.other-month {
+  cursor: default;
+}
+
+.calendar-cell.other-month:hover {
+  background: #f6f2e8;
+}
+
+.calendar-cell.other-month .calendar-date-num {
+  color: #888888;
+}
+
+.calendar-cell.empty {
+  background: #f6f2e8;
+  border: none;
+  cursor: default;
+  opacity: 0.6;
+}
+
+.calendar-date-num {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.calendar-daily-total {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* Total Text Colors */
+.cal-amount-expense {
+  color: var(--maroon);
+}
+.cal-amount-income, .cal-amount-pos {
+  color: var(--green-header);
+}
+.cal-amount-neg {
+  color: #d9534f;
+}
+.cal-amount-zero {
+  color: #888888;
+}
+
+/* Modal Calendar Daily Details (Dynamic Border according to active mode) */
+.modal-card.modal-calendar-daily {
+  max-width: 500px;
+  transition: border-color 0.3s ease;
+}
+
+.modal-card.modal-calendar-daily.modal-daily-expense {
+  border-color: var(--maroon);
+}
+.modal-card.modal-calendar-daily.modal-daily-expense .modal-close-tab {
+  background: var(--maroon);
+}
+
+.modal-card.modal-calendar-daily.modal-daily-income {
+  border-color: var(--green-header);
+}
+.modal-card.modal-calendar-daily.modal-daily-income .modal-close-tab {
+  background: var(--green-header);
+}
+
+.modal-card.modal-calendar-daily.modal-daily-net {
+  border-color: var(--net-color);
+}
+.modal-card.modal-calendar-daily.modal-daily-net .modal-close-tab {
+  background: var(--net-color);
+}
 
 /* ---------- Empty state ---------- */
 
@@ -624,7 +789,7 @@ body.menu-open .app-overlay {
 }
 
 .modal-card {
-  position: relative; /* เพิ่มเพื่อให้แท็บปิดอิงตำแหน่งมุมขอบบนซ้ายของการ์ดได้ถูกต้อง */
+  position: relative;
   background: var(--white);
   width: 100%;
   max-width: 420px;
@@ -643,7 +808,6 @@ body.menu-open .app-overlay {
   max-width: 680px;
 }
 
-/* สไตล์ปุ่มปิดทรงแท็บลอย (✕) ยื่นแปะตรงมุมขอบบนซ้าย */
 .modal-close-tab {
   position: absolute;
   top: -42px;
@@ -680,7 +844,6 @@ body.menu-open .app-overlay {
   margin-bottom: 14px;
 }
 
-/* แก้ไข Date Picker ให้กดแล้วแสดงปฏิทินได้อย่างถูกต้อง */
 .date-picker-trigger {
   position: relative;
   font-size: 1.1rem;
@@ -764,7 +927,6 @@ body.menu-open .app-overlay {
   width: 100%;
 }
 
-/* กล่องยอดเงิน Unified Amount Display Box */
 .amount-display-container {
   background: #e9ecef;
   border-radius: 14px;
@@ -905,7 +1067,6 @@ body.menu-open .app-overlay {
   align-items: center;
 }
 
-/* การ์ดรูปภาพฝั่งขวา (DailyDetail) */
 .receipt-card-container {
   background: #f7f5ee;
   border: 2px dashed #d1cbb8;
@@ -963,7 +1124,6 @@ body.menu-open .app-overlay {
   font-weight: 600;
 }
 
-/* Numpad Layout */
 .numpad-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -995,7 +1155,6 @@ body.menu-open .app-overlay {
   background: #dee2e6;
 }
 
-/* Mini Modal Styles */
 .mini-modal-card {
   background: var(--white);
   padding: 20px;
@@ -1037,7 +1196,6 @@ body.menu-open .app-overlay {
   color: #333;
 }
 
-/* ย้ายปุ่มบันทึกมาแปะข้าง Modal Card (แท็บสี่เหลี่ยม) */
 .fab.active,
 .fab.active-income {
   position: fixed;
@@ -1137,5 +1295,13 @@ body.modal-detail-open .fab.active-income {
   .fab.active:active,
   .fab.active-income:active {
     transform: translateX(-50%);
+  }
+
+  .calendar-cell {
+    min-height: 60px;
+    padding: 4px;
+  }
+  .calendar-daily-total {
+    font-size: 0.75rem;
   }
 }
