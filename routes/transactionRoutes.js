@@ -3,8 +3,22 @@
 
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 const Transaction = require('../models/transaction');
 const upload = require('../middleware/upload');
+
+// Helper function to delete image file from disk
+const deleteImageFile = (imagePath) => {
+  if (!imagePath) return;
+  const relativePath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+  const fullPath = path.join(__dirname, '..', relativePath);
+  fs.unlink(fullPath, (err) => {
+    if (err && err.code !== 'ENOENT') {
+      console.error('ไม่สามารถลบไฟล์รูปภาพออกจาก Disk ได้:', err);
+    }
+  });
+};
 
 // GET /api/transactions
 // Returns transactions filtered by year and month if provided, newest first.
@@ -85,7 +99,13 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     }
     if (category) updateData.category = category;
     if (note !== undefined) updateData.note = note;
+
     if (req.file) {
+      // ค้นหาข้อมูลเดิมเพื่อลบรูปภาพเก่าบน Disk ออกก่อนอัปเดตรูปใหม่
+      const existing = await Transaction.findById(req.params.id);
+      if (existing && existing.imagePath) {
+        deleteImageFile(existing.imagePath);
+      }
       updateData.imagePath = '/uploads/' + req.file.filename;
     }
 
@@ -113,6 +133,12 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: 'ไม่พบรายการที่ต้องการลบ' });
     }
+
+    // ลบไฟล์รูปภาพออกจาก Disk หากรายการนั้นมีรูปภาพอยู่
+    if (deleted.imagePath) {
+      deleteImageFile(deleted.imagePath);
+    }
+
     res.json({ message: 'ลบรายการสำเร็จ', id: req.params.id });
   } catch (err) {
     res.status(500).json({ message: 'ไม่สามารถลบรายการได้', error: err.message });
